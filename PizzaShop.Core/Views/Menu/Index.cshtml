@@ -1,0 +1,65 @@
+@{
+    Layout = "~/Views/Shared/_Dashboard.cshtml";
+}
+@model PizzaShop.Repository.ModelView.MenuWithItemsViewModel
+<!-- all body code goes here -->
+<!-- menu code -->
+<div class="py-4 px-3  d-flex justify-content-between">
+    <h3 class="text-blue">Menu</h3>
+</div>
+<div class="maincontent">
+
+    <div class="formclass  border rounded ">
+        <ul class="nav nav-tabs" id="myTab" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active">
+                    <img src="~/images/icons/bars-solid.svg" height="20px" alt="">
+                    Menu
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link">
+                    <img src="~/images/icons/pen-to-square-solid.svg" height="20px" alt="">
+                    Modifires
+                </button>
+            </li>
+
+        </ul>
+    </div>
+    <div class="formclass  border rounded ">
+        <div class="tab-content" id="myTabContent">
+            <div class="tab-pane fade show active" id="home-tab-pane" role="tabpanel" aria-labelledby="home-tab"
+                tabindex="0">
+                <div class="nav-home">
+@* ---------------------------partial view of tables and category side bar---------------------------------*@
+                    @Html.Partial("_CategoryPartial",Model)
+@* --------------------------------------------------------------------------------------------------------*@
+
+                </div>
+            </div>
+        </div>
+        <div class="tab-pane fade" id="profile-tab-pane" role="tabpanel" aria-labelledby="profile-tab" tabindex="0">
+            ...
+        </div>
+    </div>
+
+</div>
+
+</div>
+
+
+
+
+
+@section scripts {
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function () {
+
+            var CategoryAdd = '@TempData["CategoryAdd"]';
+            if (CategoryAdd) {
+                toastr.success(CategoryAdd, 'success', { timeOut: 3000 });
+            }
+        });
+    </script>
+}

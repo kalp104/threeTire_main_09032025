@@ -1,0 +1,371 @@
+﻿using System;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+
+namespace PizzaShop.Repository.Models;
+
+public partial class PizzaShopContext : DbContext
+{
+    public PizzaShopContext()
+    {
+    }
+
+    public PizzaShopContext(DbContextOptions<PizzaShopContext> options)
+        : base(options)
+    {
+    }
+
+    public virtual DbSet<Account> Accounts { get; set; }
+
+    public virtual DbSet<Category> Categories { get; set; }
+
+    public virtual DbSet<City> Cities { get; set; }
+
+    public virtual DbSet<Country> Countries { get; set; }
+
+    public virtual DbSet<Image> Images { get; set; }
+
+    public virtual DbSet<Item> Items { get; set; }
+
+    public virtual DbSet<Permission> Permissions { get; set; }
+
+    public virtual DbSet<PermissionsRole> PermissionsRoles { get; set; }
+
+    public virtual DbSet<Role> Roles { get; set; }
+
+    public virtual DbSet<State> States { get; set; }
+
+    public virtual DbSet<User> Users { get; set; }
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseNpgsql("Host=localhost;Database=pizzaShop;Username=postgres;password=tatva123");
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        modelBuilder.Entity<Account>(entity =>
+        {
+            entity.HasKey(e => e.Accountid).HasName("account_pkey");
+
+            entity.ToTable("account");
+
+            entity.Property(e => e.Accountid).HasColumnName("accountid");
+            entity.Property(e => e.Createdat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdat");
+            entity.Property(e => e.Createdbyid).HasColumnName("createdbyid");
+            entity.Property(e => e.Deletedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("deletedat");
+            entity.Property(e => e.Deletedbyid).HasColumnName("deletedbyid");
+            entity.Property(e => e.Editedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("editedat");
+            entity.Property(e => e.Email)
+                .HasMaxLength(50)
+                .HasColumnName("email");
+            entity.Property(e => e.Isdeleted)
+                .HasDefaultValue(false)
+                .HasColumnName("isdeleted");
+            entity.Property(e => e.Password)
+                .HasMaxLength(255)
+                .HasColumnName("password");
+            entity.Property(e => e.Rememberme)
+                .HasDefaultValue(false)
+                .HasColumnName("rememberme");
+            entity.Property(e => e.Roleid).HasColumnName("roleid");
+            entity.Property(e => e.Username)
+                .HasMaxLength(100)
+                .HasColumnName("username");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.Accounts)
+                .HasForeignKey(d => d.Roleid)
+                .HasConstraintName("fk_roleid");
+        });
+
+        modelBuilder.Entity<Category>(entity =>
+        {
+            entity.HasKey(e => e.Categoryid).HasName("category_pkey");
+
+            entity.ToTable("category");
+
+            entity.Property(e => e.Categoryid).HasColumnName("categoryid");
+            entity.Property(e => e.Categorydescription)
+                .HasMaxLength(255)
+                .HasColumnName("categorydescription");
+            entity.Property(e => e.Categoryname)
+                .HasMaxLength(50)
+                .HasColumnName("categoryname");
+            entity.Property(e => e.Createdat)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdat");
+            entity.Property(e => e.Createdbyid).HasColumnName("createdbyid");
+            entity.Property(e => e.Deletedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("deletedat");
+            entity.Property(e => e.Deletedbyid).HasColumnName("deletedbyid");
+            entity.Property(e => e.Editedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("editedat");
+            entity.Property(e => e.Editedbyid).HasColumnName("editedbyid");
+            entity.Property(e => e.Isdeleted)
+                .HasDefaultValue(false)
+                .HasColumnName("isdeleted");
+        });
+
+        modelBuilder.Entity<City>(entity =>
+        {
+            entity.HasKey(e => e.Cityid).HasName("city_pkey");
+
+            entity.ToTable("city");
+
+            entity.Property(e => e.Cityid).HasColumnName("cityid");
+            entity.Property(e => e.Cityname)
+                .HasMaxLength(50)
+                .HasColumnName("cityname");
+            entity.Property(e => e.Stateid).HasColumnName("stateid");
+
+            entity.HasOne(d => d.State).WithMany(p => p.Cities)
+                .HasForeignKey(d => d.Stateid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("city_stateid_fkey");
+        });
+
+        modelBuilder.Entity<Country>(entity =>
+        {
+            entity.HasKey(e => e.Countryid).HasName("country_pkey");
+
+            entity.ToTable("country");
+
+            entity.Property(e => e.Countryid).HasColumnName("countryid");
+            entity.Property(e => e.Countryname)
+                .HasMaxLength(50)
+                .HasColumnName("countryname");
+        });
+
+        modelBuilder.Entity<Image>(entity =>
+        {
+            entity.HasKey(e => e.Imageid).HasName("image_pkey");
+
+            entity.ToTable("image");
+
+            entity.Property(e => e.Imageid).HasColumnName("imageid");
+            entity.Property(e => e.Imageurl)
+                .HasMaxLength(500)
+                .HasColumnName("imageurl");
+            entity.Property(e => e.Userid).HasColumnName("userid");
+
+            entity.HasOne(d => d.User).WithMany(p => p.Images)
+                .HasForeignKey(d => d.Userid)
+                .HasConstraintName("image_userid_fkey");
+        });
+
+        modelBuilder.Entity<Item>(entity =>
+        {
+            entity.HasKey(e => e.Itemid).HasName("item_pkey");
+
+            entity.ToTable("item");
+
+            entity.Property(e => e.Itemid).HasColumnName("itemid");
+            entity.Property(e => e.Categoryid).HasColumnName("categoryid");
+            entity.Property(e => e.Createdat)
+                .HasDefaultValueSql("CURRENT_TIMESTAMP")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdat");
+            entity.Property(e => e.Createdbyid).HasColumnName("createdbyid");
+            entity.Property(e => e.Defaulttax)
+                .HasDefaultValue(false)
+                .HasColumnName("defaulttax");
+            entity.Property(e => e.Deletedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("deletedat");
+            entity.Property(e => e.Deletedbyid).HasColumnName("deletedbyid");
+            entity.Property(e => e.Description)
+                .HasMaxLength(255)
+                .HasColumnName("description");
+            entity.Property(e => e.Editedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("editedat");
+            entity.Property(e => e.Editedbyid).HasColumnName("editedbyid");
+            entity.Property(e => e.Favourite).HasColumnName("favourite");
+            entity.Property(e => e.Imageid)
+                .HasMaxLength(500)
+                .HasColumnName("imageid");
+            entity.Property(e => e.Isavailabe)
+                .HasDefaultValue(false)
+                .HasColumnName("isavailabe");
+            entity.Property(e => e.Isdeleted)
+                .HasDefaultValue(false)
+                .HasColumnName("isdeleted");
+            entity.Property(e => e.Itemname)
+                .HasMaxLength(100)
+                .HasColumnName("itemname");
+            entity.Property(e => e.Itemtype).HasColumnName("itemtype");
+            entity.Property(e => e.Quantity).HasColumnName("quantity");
+            entity.Property(e => e.Rate).HasColumnName("rate");
+            entity.Property(e => e.Shortcode).HasColumnName("shortcode");
+            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.Taxpercentage).HasColumnName("taxpercentage");
+            entity.Property(e => e.Units).HasColumnName("units");
+
+            entity.HasOne(d => d.Category).WithMany(p => p.Items)
+                .HasForeignKey(d => d.Categoryid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("item_categoryid_fkey");
+        });
+
+        modelBuilder.Entity<Permission>(entity =>
+        {
+            entity.HasKey(e => e.Permissionid).HasName("permissions_pkey");
+
+            entity.ToTable("permissions");
+
+            entity.Property(e => e.Permissionid).HasColumnName("permissionid");
+            entity.Property(e => e.Permissionname)
+                .HasMaxLength(50)
+                .HasColumnName("permissionname");
+        });
+
+        modelBuilder.Entity<PermissionsRole>(entity =>
+        {
+            entity.HasKey(e => e.Permissionroleid).HasName("permissions_role_pkey");
+
+            entity.ToTable("permissions_role");
+
+            entity.Property(e => e.Permissionroleid).HasColumnName("permissionroleid");
+            entity.Property(e => e.Candelete).HasColumnName("candelete");
+            entity.Property(e => e.Canedit).HasColumnName("canedit");
+            entity.Property(e => e.Canview).HasColumnName("canview");
+            entity.Property(e => e.Createdat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdat");
+            entity.Property(e => e.Createdbyid).HasColumnName("createdbyid");
+            entity.Property(e => e.Deletedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("deletedat");
+            entity.Property(e => e.Deletedbyid).HasColumnName("deletedbyid");
+            entity.Property(e => e.Editedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("editedat");
+            entity.Property(e => e.Editedbyid).HasColumnName("editedbyid");
+            entity.Property(e => e.Isdeleted).HasColumnName("isdeleted");
+            entity.Property(e => e.Permissionid).HasColumnName("permissionid");
+            entity.Property(e => e.Roleid).HasColumnName("roleid");
+
+            entity.HasOne(d => d.Permission).WithMany(p => p.PermissionsRoles)
+                .HasForeignKey(d => d.Permissionid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("permissions_role_permissionid_fkey");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.PermissionsRoles)
+                .HasForeignKey(d => d.Roleid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("permissions_role_roleid_fkey");
+        });
+
+        modelBuilder.Entity<Role>(entity =>
+        {
+            entity.HasKey(e => e.Roleid).HasName("role_pkey");
+
+            entity.ToTable("role");
+
+            entity.Property(e => e.Roleid).HasColumnName("roleid");
+            entity.Property(e => e.Rolename)
+                .HasMaxLength(50)
+                .HasColumnName("rolename");
+        });
+
+        modelBuilder.Entity<State>(entity =>
+        {
+            entity.HasKey(e => e.Stateid).HasName("state_pkey");
+
+            entity.ToTable("state");
+
+            entity.Property(e => e.Stateid).HasColumnName("stateid");
+            entity.Property(e => e.Countryid).HasColumnName("countryid");
+            entity.Property(e => e.Statename)
+                .HasMaxLength(50)
+                .HasColumnName("statename");
+
+            entity.HasOne(d => d.Country).WithMany(p => p.States)
+                .HasForeignKey(d => d.Countryid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("state_countryid_fkey");
+        });
+
+        modelBuilder.Entity<User>(entity =>
+        {
+            entity.HasKey(e => e.Userid).HasName("users_pkey");
+
+            entity.ToTable("users");
+
+            entity.Property(e => e.Userid).HasColumnName("userid");
+            entity.Property(e => e.Accountid).HasColumnName("accountid");
+            entity.Property(e => e.Address)
+                .HasMaxLength(255)
+                .HasColumnName("address");
+            entity.Property(e => e.Cityid).HasColumnName("cityid");
+            entity.Property(e => e.Countryid).HasColumnName("countryid");
+            entity.Property(e => e.Createdat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdat");
+            entity.Property(e => e.Createdbyid).HasColumnName("createdbyid");
+            entity.Property(e => e.Deletedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("deletedat");
+            entity.Property(e => e.Deletedbyid).HasColumnName("deletedbyid");
+            entity.Property(e => e.Editedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("editedat");
+            entity.Property(e => e.Firstname)
+                .HasMaxLength(50)
+                .HasColumnName("firstname");
+            entity.Property(e => e.Isactive).HasColumnName("isactive");
+            entity.Property(e => e.Isdeleted)
+                .HasDefaultValue(false)
+                .HasColumnName("isdeleted");
+            entity.Property(e => e.Lastname)
+                .HasMaxLength(50)
+                .HasColumnName("lastname");
+            entity.Property(e => e.Phone)
+                .HasPrecision(50)
+                .HasColumnName("phone");
+            entity.Property(e => e.Roleid).HasColumnName("roleid");
+            entity.Property(e => e.Stateid).HasColumnName("stateid");
+            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.Userimage)
+                .HasMaxLength(50)
+                .HasColumnName("userimage");
+            entity.Property(e => e.Zipcode)
+                .HasPrecision(20)
+                .HasColumnName("zipcode");
+
+            entity.HasOne(d => d.Account).WithMany(p => p.Users)
+                .HasForeignKey(d => d.Accountid)
+                .HasConstraintName("fk_accountid");
+
+            entity.HasOne(d => d.City).WithMany(p => p.Users)
+                .HasForeignKey(d => d.Cityid)
+                .HasConstraintName("fk_cityid");
+
+            entity.HasOne(d => d.Country).WithMany(p => p.Users)
+                .HasForeignKey(d => d.Countryid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("users_countryid_fkey");
+
+            entity.HasOne(d => d.Role).WithMany(p => p.Users)
+                .HasForeignKey(d => d.Roleid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("users_roleid_fkey");
+
+            entity.HasOne(d => d.State).WithMany(p => p.Users)
+                .HasForeignKey(d => d.Stateid)
+                .HasConstraintName("fk_stateid");
+        });
+
+        OnModelCreatingPartial(modelBuilder);
+    }
+
+    partial void OnModelCreatingPartial(ModelBuilder modelBuilder);
+}
