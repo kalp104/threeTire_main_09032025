@@ -163,6 +163,11 @@ namespace PizzaShop.Repository.Implementations
             return await _context.Categories.Where(u => u.Isdeleted == false).OrderBy(u => u.Categoryid).ToListAsync();
         }
 
+        public async Task<List<Modifiergroup>> GetAllModifierGroupAsync()
+        {
+            return await _context.Modifiergroups.Where(u => u.Isdeleted == false).OrderBy(u => u.Modifiergroupid).ToListAsync();
+        }
+
         public async Task<List<Item>> GetAllItemsAsync()
         {
             return await _context.Items.Where(u => u.Isdeleted == false).OrderBy(u => u.Itemid).ToListAsync();

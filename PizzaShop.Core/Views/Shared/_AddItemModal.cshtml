@@ -16,10 +16,13 @@
                                 <div class="col-6 form-floating mb-3">
                                     <select class="form-select" asp-for="item.Categoryid" >
                                         <option value="">Select Category</option>
-                                        @foreach (var c in Model.Categories)
+                                        @if(Model.Categories != null) {
+                                            @foreach (var c in Model.Categories)
                                         {
                                             <option value="@c.Categoryid">@c.Categoryname</option>
                                         }
+                                        }
+                                        
                                     </select>
                                     <label>Category</label>
                                     <span asp-validation-for="item.Categoryid" class="text-danger"></span>
@@ -62,9 +65,10 @@
                                     <span asp-validation-for="item.Units" class="text-danger"></span>
                                 </div>
                             </div>
-                            <div class="row">
+                            <div class="row ">
                                 <div
                                     class="col-3 form-check form-switch d-flex justify-content-center align-items-center pb-3">
+                                <div class="m-1">1</div>
                                     <input class="form-check-input me-2" type="checkbox" name="item.Isavailabe"
                                         value="true" @(Model?.item?.Isavailabe == true ? "checked" : "") />
                                     <input type="hidden" name="item.Isavailabe" value="false" />
@@ -82,7 +86,7 @@
                                 <div class="col-3 form-floating mb-3">
                                     <input type="number" step="0.01" class="form-control"
                                         asp-for="item.Taxpercentage" placeholder="%" />
-                                    <label>Tax Percentage</label>
+                                    <label>Tax %</label>
                                     <span asp-validation-for="item.Taxpercentage" class="text-danger"></span>
                                 </div>
                                 <div class="col-3 form-floating mb-3">
@@ -142,6 +146,3 @@
     </div>
 </div>
 
-@* @section Scripts {
-    <partial name="_ValidationScriptsPartial" />
-} *@

@@ -27,6 +27,10 @@ public partial class PizzaShopContext : DbContext
 
     public virtual DbSet<Item> Items { get; set; }
 
+    public virtual DbSet<Modifier> Modifiers { get; set; }
+
+    public virtual DbSet<Modifiergroup> Modifiergroups { get; set; }
+
     public virtual DbSet<Permission> Permissions { get; set; }
 
     public virtual DbSet<PermissionsRole> PermissionsRoles { get; set; }
@@ -174,9 +178,9 @@ public partial class PizzaShopContext : DbContext
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("createdat");
             entity.Property(e => e.Createdbyid).HasColumnName("createdbyid");
-            entity.Property(e => e.Defaulttax)
+            entity.Property(e => e.DefaultTax)
                 .HasDefaultValue(false)
-                .HasColumnName("defaulttax");
+                .HasColumnName("defaultTax");
             entity.Property(e => e.Deletedat)
                 .HasColumnType("timestamp without time zone")
                 .HasColumnName("deletedat");
@@ -213,6 +217,79 @@ public partial class PizzaShopContext : DbContext
                 .HasForeignKey(d => d.Categoryid)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("item_categoryid_fkey");
+        });
+
+        modelBuilder.Entity<Modifier>(entity =>
+        {
+            entity.HasKey(e => e.Modifierid).HasName("modifiers_pkey");
+
+            entity.ToTable("modifiers");
+
+            entity.Property(e => e.Modifierid).HasColumnName("modifierid");
+            entity.Property(e => e.Createdat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdat");
+            entity.Property(e => e.Createdbyid).HasColumnName("createdbyid");
+            entity.Property(e => e.Deletedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("deletedat");
+            entity.Property(e => e.Deletedbyid).HasColumnName("deletedbyid");
+            entity.Property(e => e.Editedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("editedat");
+            entity.Property(e => e.Editedbyid).HasColumnName("editedbyid");
+            entity.Property(e => e.Isdeleted)
+                .HasDefaultValue(false)
+                .HasColumnName("isdeleted");
+            entity.Property(e => e.Modifierdescription)
+                .HasMaxLength(500)
+                .HasColumnName("modifierdescription");
+            entity.Property(e => e.Modifiergroupid).HasColumnName("modifiergroupid");
+            entity.Property(e => e.Modifiername)
+                .HasMaxLength(50)
+                .HasColumnName("modifiername");
+            entity.Property(e => e.Modifierquantity).HasColumnName("modifierquantity");
+            entity.Property(e => e.Modifierrate).HasColumnName("modifierrate");
+            entity.Property(e => e.Modifierunit).HasColumnName("modifierunit");
+            entity.Property(e => e.Taxdefault)
+                .HasDefaultValue(false)
+                .HasColumnName("taxdefault");
+            entity.Property(e => e.Taxpercentage).HasColumnName("taxpercentage");
+
+            entity.HasOne(d => d.Modifiergroup).WithMany(p => p.Modifiers)
+                .HasForeignKey(d => d.Modifiergroupid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("modifiers_modifiergroupid_fkey");
+        });
+
+        modelBuilder.Entity<Modifiergroup>(entity =>
+        {
+            entity.HasKey(e => e.Modifiergroupid).HasName("modifiergroup_pkey");
+
+            entity.ToTable("modifiergroup");
+
+            entity.Property(e => e.Modifiergroupid).HasColumnName("modifiergroupid");
+            entity.Property(e => e.Createdat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdat");
+            entity.Property(e => e.Createdbyid).HasColumnName("createdbyid");
+            entity.Property(e => e.Deletedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("deletedat");
+            entity.Property(e => e.Deletedbyid).HasColumnName("deletedbyid");
+            entity.Property(e => e.Editedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("editedat");
+            entity.Property(e => e.Editedbyid).HasColumnName("editedbyid");
+            entity.Property(e => e.Isdeleted)
+                .HasDefaultValue(false)
+                .HasColumnName("isdeleted");
+            entity.Property(e => e.Modifiergroupdescription)
+                .HasMaxLength(50)
+                .HasColumnName("modifiergroupdescription");
+            entity.Property(e => e.Modifiergroupname)
+                .HasMaxLength(50)
+                .HasColumnName("modifiergroupname");
         });
 
         modelBuilder.Entity<Permission>(entity =>

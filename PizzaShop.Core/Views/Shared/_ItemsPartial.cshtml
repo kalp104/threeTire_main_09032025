@@ -1,6 +1,6 @@
 @model PizzaShop.Repository.ModelView.MenuWithItemsViewModel
 
-<div class="p-2">
+<div class="p-2" id="itemsContainer" data-total-items="@Model.TotalItems">
     @if (Model.Items != null && Model.Items.Any())
     {
         <table class="table text-nowrap">
@@ -19,7 +19,11 @@
                 @foreach (var i in Model.Items)
                 {
                     <tr>
-                        <td><input class="checkboxes form-check-input" type="checkbox" value="" id="selectAllCheckbox_@i.Itemid"></td>
+                        <td><input class="form-check-input item-checkbox" 
+                                       type="checkbox" 
+                                       name="selectedItemIds" 
+                                       value="@i.Itemid" 
+                                       data-item-id="@i.Itemid"></td>
                         <td>
                             @if (string.IsNullOrEmpty(i.Imageid) || i.Imageid == "default")
                             {
@@ -121,7 +125,7 @@
                                                         <label>Available</label>
                                                     </div>
                                                     <div class="col-3 form-check form-switch d-flex justify-content-center align-items-center pb-3">
-                                                        <input class="form-check-input me-2" type="checkbox" name="item.Defaulttax" value="true" @(i.Defaulttax == true ? "checked" : "") />
+                                                        <input class="form-check-input me-2" type="checkbox" name="item.Defaulttax" value="true" @(i.DefaultTax == true ? "checked" : "") />
                                                         <input type="hidden" name="item.Defaulttax" value="false" />
                                                         <label>Default Tax</label>
                                                     </div>
@@ -217,7 +221,9 @@
                     </div>
                 }
             </tbody>
+            
         </table>
+        
     }
     else
     {
@@ -226,29 +232,3 @@
 </div>
 
 <!-- Pagination (unchanged) -->
-<nav aria-label="Page navigation example">
-    <ul class="pagination justify-content-end align-items-center d-lg-flex d-sm-flex d-block gap-2">
-        <div class="pagination justify-content-end align-items-center mb-2 mt-2">
-            <div class="">items per page: </div>
-            <div class="dropdown">
-                <button class="btn border dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
-                    @Model.PageSize
-                </button>
-                <ul class="dropdown-menu">
-                    <li><a class="dropdown-item" href="#">5</a></li>
-                    <li><a class="dropdown-item" href="#">10</a></li>
-                    <li><a class="dropdown-item" href="#">15</a></li>
-                </ul>
-            </div>
-        </div>
-        <div class="pagination justify-content-end align-items-center mb-2 mt-2">
-            <span>
-                Showing @((Model.CurrentPage - 1) * Model.PageSize + 1)-@Math.Min(Model.CurrentPage * Model.PageSize, Model.TotalItems) of @Model.TotalItems
-            </span>
-            <li class="page-item">
-                <a class="page-link mx-2"><</a>
-            </li>
-            <a class="page-link" href="#">></a>
-        </div>
-    </ul>
-</nav>

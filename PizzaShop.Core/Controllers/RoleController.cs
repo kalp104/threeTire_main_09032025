@@ -73,41 +73,54 @@ public class RoleController : Controller
     }
 
     [HttpGet]
-public async Task<IActionResult> Permission(int id)
-{
-    await FetchData();
-    // IActionResult? permissionResult = await CheckPermissionAsync();
-    // if (permissionResult != null)
-    // {
-    //     return permissionResult;
-    // }
-
-    List<RolePermissionModelView>? result = await _roleService.RoleBasePermission(id);
-
-    if (id == 1) ViewBag.Rolename = "AccountManager";
-    if (id == 2) ViewBag.Rolename = "Chef";
-    if (id == 3) ViewBag.Rolename = "Admin";
-
-    return View(result ?? new List<RolePermissionModelView>());
-}
-
-[HttpPost]
-[ValidateAntiForgeryToken]
-public async Task<IActionResult> UpdatePermission(List<RolePermissionModelView> model)
-{
-    await FetchData();
-    // IActionResult? permissionResult = await CheckPermissionAsync();
-    // if (permissionResult != null)
-    // {
-    //     return permissionResult;
-    // }
-
-    if (ModelState.IsValid)
+    public async Task<IActionResult> Permission(int id)
     {
-        await _roleService.UpdatePermissions(model);
-        TempData["SuccessPermission"] = "Permissions updated successfully";
-        return RedirectToAction("Permission", new { id = model.FirstOrDefault()?.RoleId });
+        await FetchData();
+        // IActionResult? permissionResult = await CheckPermissionAsync();
+        // if (permissionResult != null)
+        // {
+        //     return permissionResult;
+        // }
+        string role = HttpContext.Items["UserRole"] as string ?? string.Empty;
+        List<RolePermissionModelView>? result = await _roleService.RoleBasePermission(id);
+        int roleid = 0;
+        if (role == "AccountManager") roleid = 1 ;
+        if (role == "Chef") roleid = 2;
+        if (role == "Admin") roleid = 3;
+        List<RolePermissionModelView>? permissions = await _roleService.RoleBasePermission(roleid);
+        bool Save = true;
+        foreach (var i in permissions)
+        {
+            if (i.PermissionId == 2 && i.Canedit == false)
+            {
+                Save = false;
+                break;
+            }
+        }
+        if (id == 1) ViewBag.Rolename = "AccountManager";
+        if (id == 2) ViewBag.Rolename = "Chef";
+        if (id == 3) ViewBag.Rolename = "Admin";
+        ViewBag.Save = Save;
+        return View(result ?? new List<RolePermissionModelView>());
     }
-    return View("Permission", model);
-}
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> UpdatePermission(List<RolePermissionModelView> model)
+    {
+        await FetchData();
+        // IActionResult? permissionResult = await CheckPermissionAsync();
+        // if (permissionResult != null)
+        // {
+        //     return permissionResult;
+        // }
+
+        if (ModelState.IsValid)
+        {
+            await _roleService.UpdatePermissions(model);
+            TempData["SuccessPermission"] = "Permissions updated successfully";
+            return RedirectToAction("Permission", new { id = model.FirstOrDefault()?.RoleId });
+        }
+        return View("Permission", model);
+    }
 }

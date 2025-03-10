@@ -19,7 +19,6 @@ public class ItemsViewModel
     public int? Itemtype { get; set; }
 
     [Required(ErrorMessage = "Rate is required")]
-    [Range(0.01, double.MaxValue, ErrorMessage = "Rate must be greater than 0")]
     public decimal? Rate { get; set; }
 
     [Required(ErrorMessage = "Quantity is required")]
@@ -33,7 +32,8 @@ public class ItemsViewModel
     public bool Isavailabe { get; set; } 
 
     public bool Defaulttax { get; set; } 
-
+    
+    [Required(ErrorMessage = "Tax % required")]
     [Range(0, 100, ErrorMessage = "Tax percentage must be between 0 and 100")]
     public decimal? Taxpercentage { get; set; }
 

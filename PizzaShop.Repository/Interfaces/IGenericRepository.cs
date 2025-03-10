@@ -21,6 +21,7 @@ public interface IGenericRepository<T> where T : class
     Task<List<RolePermissionModelView>?> GetPermissionAsync(int id);
     Task<PermissionsRole?> GetRoleAndPermissionAsync(int roleid, int permissionid);
     Task<List<Category>> GetAllCategoryAsync();
+    Task<List<Modifiergroup>> GetAllModifierGroupAsync();
     Task<List<Item>> GetAllItemsAsync();
     public Task<List<Item>> GetItemsByCategoryAsync(int? id);
 }

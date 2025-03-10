@@ -38,13 +38,18 @@ public class UserTableController : Controller
     }
     public async Task<IActionResult> Index()
     {
-        string email = HttpContext.Items["UserEmail"] as string ?? string.Empty;
-        await FetchData();
-        if (email == null)
+        if (HttpContext.Request.Cookies["auth_token"] != null)
         {
-            return RedirectToAction("index", "Home");
+
+            string email = HttpContext.Items["UserEmail"] as string ?? string.Empty;
+            await FetchData();
+            if (email == null)
+            {
+                return RedirectToAction("index", "Home");
+            }
+            return View();
         }
-        return View();
+        return RedirectToAction("Index", "Home");
     }
 
 

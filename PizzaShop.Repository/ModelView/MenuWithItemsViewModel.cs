@@ -12,18 +12,27 @@ public class MenuWithItemsViewModel
     [Required(ErrorMessage = "Category Description is required")]
     [MaxLength(250, ErrorMessage = "description limit exceed ")]
     public string? CategoryDescription { get; set; }
+
+    [Required(ErrorMessage = "Modifier group name is required")]
+    [MaxLength(40, ErrorMessage = "Name limit exceed ")]
+    public string? Modifiergroupname { get; set; }
+    [Required(ErrorMessage = "Modifier Description is required")]
+    [MaxLength(250, ErrorMessage = "description limit exceed ")]
+    public string? Modifiergroupdescription { get; set; }
+
     [Required]
     public int Userid { get; set; }
     [Required]
     public int Categoryid { get; set; }
+    [Required]
+    public int Modifiergroupid {get; set;}
     public int itemid { get; set; }
     public ItemsViewModel? item { get; set; }
     public List<Category>? Categories { get; set; }
     public List<Item>? Items { get; set; }
-
-
-    public int TotalItems { get; set; }
+    public List<Modifiergroup>? modifiergroups {get; set;}
     public int CurrentPage { get; set; }
     public int PageSize { get; set; }
+    public int TotalItems { get; set; }
 }
 

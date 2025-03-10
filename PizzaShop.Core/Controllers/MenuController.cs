@@ -49,74 +49,55 @@ public class MenuController : Controller
         }
     }
 
-    // Private method for permission check
-    // private async Task<IActionResult?> CheckPermissionAsync()
-    // {
-    //     string role = HttpContext.Items["UserRole"] as string ?? string.Empty;
-    //     List<RolePermissionModelView>? rolefilter = await _userService.RoleFilter(role);
-
-    //     if (rolefilter != null)
-    //     {
-    //         foreach (var i in rolefilter)
-    //         {
-    //             if (i.PermissionId == 3 && i.Canview == false)
-    //             {
-    //                 return RedirectToAction("Privacy", "Home");
-    //             }
-    //         }
-    //     }
-    //     return null; // No redirection needed
-    // }
-
-    public async Task<IActionResult> Index(int? categoryId = null, string? searchTerm = null)
+    public async Task<IActionResult> Index(int? categoryId = null, string? searchTerm = null, int? modifierId = null, string? searchModifier = null, int pageNumber = 1, int pageSize = 5)
     {
         await FetchData();
-        // IActionResult? permissionResult = await CheckPermissionAsync();
-        // if (permissionResult != null)
-        // {
-        //     return permissionResult;
-        // }
+        MenuWithItemsViewModel menu = await _menuService.GetAllCategory(categoryId, searchTerm, pageNumber, pageSize);
+        List<Modifiergroup>? result = await _menuService.GetAllModifier(modifierId, searchModifier);
 
-        MenuWithItemsViewModel menu = await _menuService.GetAllCategory(categoryId, searchTerm);
         ViewBag.SelectedCategoryId = categoryId;
+        menu.modifiergroups = result;
+        ViewBag.SelectedModifierId = modifierId;
+
         return View(menu);
     }
 
-    public async Task<IActionResult> FilterItems(int? categoryId = null, string? searchTerm = null)
+    public async Task<IActionResult> FilterItems(int? categoryId = null, string? searchTerm = null, int pageNumber = 1, int pageSize = 5)
     {
-        // IActionResult? permissionResult = await CheckPermissionAsync();
-        // if (permissionResult != null)
-        // {
-        //     return permissionResult;
-        // }
         await FetchData();
-        MenuWithItemsViewModel menu = await _menuService.GetAllCategory(categoryId, searchTerm);
+        MenuWithItemsViewModel menu = await _menuService.GetAllCategory(categoryId, searchTerm, pageNumber, pageSize);
+
+        // Get total items count before pagination
+        int totalItems = menu.Items.Count;
+
+        // Apply pagination
+        menu.Items = menu.Items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
+        menu.TotalItems = totalItems; // Ensure TotalItems is set
+
         return PartialView("_ItemsPartial", menu);
     }
+
+
 
     [HttpPost]
     public async Task<IActionResult> AddCategory(MenuWithItemsViewModel model)
     {
-        // IActionResult? permissionResult = await CheckPermissionAsync();
-        // if (permissionResult != null)
-        // {
-        //     return permissionResult;
-        // }
-
         await _menuService.AddCategoryService(model);
         TempData["CategoryAdd"] = "Category added successfully";
         return RedirectToAction("Index");
     }
 
     [HttpPost]
+    public async Task<IActionResult> AddModifierGroup(MenuWithItemsViewModel model)
+    {
+        await _menuService.AddModifierGroupService(model);
+        TempData["ModifierGroupAdd"] = "ModifierGroup added successfully";
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
     public async Task<IActionResult> EditCategory(MenuWithItemsViewModel model)
     {
-        // IActionResult? permissionResult = await CheckPermissionAsync();
-        // if (permissionResult != null)
-        // {
-        //     return permissionResult;
-        // }
-
         await _menuService.EditCategoryService(model);
         TempData["CategoryAdd"] = "Category Edited successfully";
         return RedirectToAction("Index");
@@ -125,14 +106,16 @@ public class MenuController : Controller
     [HttpPost]
     public async Task<IActionResult> DeleteCategory(MenuWithItemsViewModel model)
     {
-        // IActionResult? permissionResult = await CheckPermissionAsync();
-        // if (permissionResult != null)
-        // {
-        //     return permissionResult;
-        // }
-
         await _menuService.DeleteCategoryService(model);
-        TempData["CategoryAdd"] = "Category Deleted successfully";
+        TempData["CategoryAdd"] = "Modifier Group Deleted successfully";
+        return RedirectToAction("Index");
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> DeleteModifierGroup(MenuWithItemsViewModel model)
+    {
+        await _menuService.DeleteModifierGroupService(model);
+        TempData["ModifierGroupAdd"] = "Category Deleted successfully";
         return RedirectToAction("Index");
     }
 
@@ -201,7 +184,7 @@ public class MenuController : Controller
                 Quantity = item.Quantity,
                 Units = item.Units,
                 Isavailabe = (bool)item.Isavailabe,
-                Defaulttax = item.Defaulttax,
+                Defaulttax = (bool)item.DefaultTax,
                 Taxpercentage = item.Taxpercentage,
                 Shortcode = item.Shortcode,
                 Description = item.Description
@@ -220,13 +203,13 @@ public class MenuController : Controller
         if (viewModel.item == null)
         {
             MenuWithItemsViewModel menu = await _menuService.GetAllCategory(0, "");
-            menu.item = new ItemsViewModel(); // Initialize to avoid null reference
             ModelState.AddModelError("", "Item details are required.");
             return View("Index", menu);
         }
 
         try
-        {   await FetchData();
+        {
+            await FetchData();
             int userId = ViewBag.Userid;
             await _menuService.UpdateItemAsync(viewModel, viewModel.item.UploadFiles, userId);
             TempData["SuccessMessage"] = "Item updated successfully!";

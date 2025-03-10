@@ -60,17 +60,16 @@ public class TokenMiddleware
             catch (Exception ex)
             {
                 Console.WriteLine($"Token validation failed: {ex.Message}");
-                context.Response.Redirect("/Home/Index");
+                context.Response.Redirect("/");
                 return;
             }
 
             if (context.User.Identity != null && !context.User.Identity.IsAuthenticated)
             {
-                context.Response.Redirect("/Home/Index");
+                context.Response.Redirect("/");
                 return;
             }
         }
-
         await _next(context);
     }
 }
