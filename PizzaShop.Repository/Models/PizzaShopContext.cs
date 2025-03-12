@@ -27,6 +27,8 @@ public partial class PizzaShopContext : DbContext
 
     public virtual DbSet<Item> Items { get; set; }
 
+    public virtual DbSet<Modfierandgroupsmapping> Modfierandgroupsmappings { get; set; }
+
     public virtual DbSet<Modifier> Modifiers { get; set; }
 
     public virtual DbSet<Modifiergroup> Modifiergroups { get; set; }
@@ -219,6 +221,43 @@ public partial class PizzaShopContext : DbContext
                 .HasConstraintName("item_categoryid_fkey");
         });
 
+        modelBuilder.Entity<Modfierandgroupsmapping>(entity =>
+        {
+            entity.HasKey(e => e.Modfierandgroupsmappingid).HasName("modfierandgroupsmapping_pkey");
+
+            entity.ToTable("modfierandgroupsmapping");
+
+            entity.Property(e => e.Modfierandgroupsmappingid).HasColumnName("modfierandgroupsmappingid");
+            entity.Property(e => e.Createdat)
+                .HasDefaultValueSql("now()")
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("createdat");
+            entity.Property(e => e.Createdbyid).HasColumnName("createdbyid");
+            entity.Property(e => e.Deletedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("deletedat");
+            entity.Property(e => e.Deletedbyid).HasColumnName("deletedbyid");
+            entity.Property(e => e.Editedat)
+                .HasColumnType("timestamp without time zone")
+                .HasColumnName("editedat");
+            entity.Property(e => e.Editedbyid).HasColumnName("editedbyid");
+            entity.Property(e => e.Isdelete)
+                .HasDefaultValue(false)
+                .HasColumnName("isdelete");
+            entity.Property(e => e.Modifiergroupid).HasColumnName("modifiergroupid");
+            entity.Property(e => e.Modifierid).HasColumnName("modifierid");
+
+            entity.HasOne(d => d.Modifiergroup).WithMany(p => p.Modfierandgroupsmappings)
+                .HasForeignKey(d => d.Modifiergroupid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("modfierandgroupsmapping_modifiergroupid_fkey");
+
+            entity.HasOne(d => d.Modifier).WithMany(p => p.Modfierandgroupsmappings)
+                .HasForeignKey(d => d.Modifierid)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("modfierandgroupsmapping_modifierid_fkey");
+        });
+
         modelBuilder.Entity<Modifier>(entity =>
         {
             entity.HasKey(e => e.Modifierid).HasName("modifiers_pkey");
@@ -244,7 +283,6 @@ public partial class PizzaShopContext : DbContext
             entity.Property(e => e.Modifierdescription)
                 .HasMaxLength(500)
                 .HasColumnName("modifierdescription");
-            entity.Property(e => e.Modifiergroupid).HasColumnName("modifiergroupid");
             entity.Property(e => e.Modifiername)
                 .HasMaxLength(50)
                 .HasColumnName("modifiername");
@@ -255,11 +293,6 @@ public partial class PizzaShopContext : DbContext
                 .HasDefaultValue(false)
                 .HasColumnName("taxdefault");
             entity.Property(e => e.Taxpercentage).HasColumnName("taxpercentage");
-
-            entity.HasOne(d => d.Modifiergroup).WithMany(p => p.Modifiers)
-                .HasForeignKey(d => d.Modifiergroupid)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("modifiers_modifiergroupid_fkey");
         });
 
         modelBuilder.Entity<Modifiergroup>(entity =>

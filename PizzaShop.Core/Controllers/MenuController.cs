@@ -1,5 +1,6 @@
 using System;
 using System.Reflection.Metadata.Ecma335;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
@@ -49,40 +50,57 @@ public class MenuController : Controller
         }
     }
 
-    public async Task<IActionResult> Index(int? categoryId = null, string? searchTerm = null, int? modifierId = null, string? searchModifier = null, int pageNumber = 1, int pageSize = 5)
+    public async Task<IActionResult> Index(int? categoryId = null, string? searchTerm = null, int? modifierGroupId = null, string? searchModifier = null, int pageNumber = 1, int pageSize = 5)
     {
         await FetchData();
         MenuWithItemsViewModel menu = await _menuService.GetAllCategory(categoryId, searchTerm, pageNumber, pageSize);
-        List<Modifiergroup>? result = await _menuService.GetAllModifier(modifierId, searchModifier);
-
+        MenuWithItemsViewModel menu2 = await _menuService.GetModifiers(modifierGroupId, searchTerm, pageNumber, pageSize);
         ViewBag.SelectedCategoryId = categoryId;
-        menu.modifiergroups = result;
-        ViewBag.SelectedModifierId = modifierId;
+        MenuWithItemsViewModel result = new MenuWithItemsViewModel
+        {
+            Categories = menu.Categories,
+            Items = menu.Items,
+            CurrentPage = menu.CurrentPage,
+            PageSize = menu.PageSize,
+            TotalItems = menu.TotalItems,
+            modifiergroups = menu2.modifiergroups,
+            Modifiers = menu2.Modifiers,
+            CurrentPage1 = menu2.CurrentPage1,
+            PageSize1 = menu2.PageSize1,
+            TotalItems1 = menu2.TotalItems1
+        };
+        ViewBag.SelectedModifierId = modifierGroupId;
 
-        return View(menu);
+        return View(result);
     }
 
     public async Task<IActionResult> FilterItems(int? categoryId = null, string? searchTerm = null, int pageNumber = 1, int pageSize = 5)
     {
         await FetchData();
         MenuWithItemsViewModel menu = await _menuService.GetAllCategory(categoryId, searchTerm, pageNumber, pageSize);
-
-        // Get total items count before pagination
-        int totalItems = menu.Items.Count;
-
-        // Apply pagination
-        menu.Items = menu.Items.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
-        menu.TotalItems = totalItems; // Ensure TotalItems is set
-
         return PartialView("_ItemsPartial", menu);
     }
 
+    public async Task<IActionResult> FilterModifiers(int? modifierGroupId = null, string? searchTerm = null, int pageNumber = 1, int pageSize = 5)
+    {
+        await FetchData();
+        MenuWithItemsViewModel menu = await _menuService.GetModifiers(modifierGroupId, searchTerm, pageNumber, pageSize);
+        return PartialView("_ModifiersPartial", menu);
+    }
+
+    public async Task<IActionResult> FilterModifiersAtAddCategory(int? modifierGroupId = null, string? searchTerm = null, int pageNumber = 1, int pageSize = 5)
+    {
+        await FetchData();
+        MenuWithItemsViewModel menu = await _menuService.GetModifiers(modifierGroupId, searchTerm, pageNumber, pageSize);
+        return PartialView("_ModifiersAtAddCategoryPartail", menu);
+    }
 
 
     [HttpPost]
     public async Task<IActionResult> AddCategory(MenuWithItemsViewModel model)
     {
         await _menuService.AddCategoryService(model);
+        await FetchData();
         TempData["CategoryAdd"] = "Category added successfully";
         return RedirectToAction("Index");
     }
@@ -91,6 +109,7 @@ public class MenuController : Controller
     public async Task<IActionResult> AddModifierGroup(MenuWithItemsViewModel model)
     {
         await _menuService.AddModifierGroupService(model);
+        await FetchData();
         TempData["ModifierGroupAdd"] = "ModifierGroup added successfully";
         return RedirectToAction("Index");
     }
@@ -99,6 +118,7 @@ public class MenuController : Controller
     public async Task<IActionResult> EditCategory(MenuWithItemsViewModel model)
     {
         await _menuService.EditCategoryService(model);
+        await FetchData();
         TempData["CategoryAdd"] = "Category Edited successfully";
         return RedirectToAction("Index");
     }
@@ -107,6 +127,7 @@ public class MenuController : Controller
     public async Task<IActionResult> DeleteCategory(MenuWithItemsViewModel model)
     {
         await _menuService.DeleteCategoryService(model);
+        await FetchData();
         TempData["CategoryAdd"] = "Modifier Group Deleted successfully";
         return RedirectToAction("Index");
     }
@@ -115,6 +136,7 @@ public class MenuController : Controller
     public async Task<IActionResult> DeleteModifierGroup(MenuWithItemsViewModel model)
     {
         await _menuService.DeleteModifierGroupService(model);
+        await FetchData();
         TempData["ModifierGroupAdd"] = "Category Deleted successfully";
         return RedirectToAction("Index");
     }
@@ -126,8 +148,9 @@ public class MenuController : Controller
         if (viewModel.item == null)
         {
             // Handle null item case early
-            MenuWithItemsViewModel menu2 = await _menuService.GetAllCategory(0, "");
+            MenuWithItemsViewModel menu2 = await _menuService.GetAllCategory(0, "", 1, 5);
             menu2.item = viewModel.item;
+            await FetchData();
             ModelState.AddModelError("", "Item details are required.");
             return View("Index", menu2);
         }
@@ -144,29 +167,69 @@ public class MenuController : Controller
             catch (Exception ex)
             {
                 System.Console.WriteLine("error :" + ex.Message);
-                MenuWithItemsViewModel menu1 = await _menuService.GetAllCategory(0, "");
+                MenuWithItemsViewModel menu1 = await _menuService.GetAllCategory(0, "", 1, 5);
                 menu1.item = viewModel.item;
                 return RedirectToAction("Index", menu1);
             }
         }
-        MenuWithItemsViewModel menu = await _menuService.GetAllCategory(0, "");
+        MenuWithItemsViewModel menu = await _menuService.GetAllCategory(0, "", 1, 5);
         menu.item = viewModel.item;
         return RedirectToAction("Index", menu);
     }
 
-
     [HttpPost]
-    public async Task<IActionResult> DeleteItem(MenuWithItemsViewModel model)
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> AddModifier(MenuWithItemsViewModel viewModel)
     {
-        await _menuService.DeleteItemService(model);
+        if (viewModel.modifiersViewModel == null)
+        {
+            MenuWithItemsViewModel menu2 = await _menuService.GetModifiers(0, "", 1, 5);
+            menu2.modifiersViewModel = viewModel.modifiersViewModel;
+            ModelState.AddModelError("", "Item details are required.");
+            return View("Index", menu2);
+        }
+        if (viewModel.modifiersViewModel != null)
+        {
+            try
+            {
+                await FetchData();
+                await _menuService.AddModifierAsync(viewModel, ViewBag.Userid);
+            }
+            catch (Exception ex)
+            {
+
+                MenuWithItemsViewModel menu2 = await _menuService.GetModifiers(0, "", 1, 5);
+                menu2.modifiersViewModel = viewModel.modifiersViewModel;
+                ModelState.AddModelError("", "Item details are required." + ex.Message);
+                return View("Index", menu2);
+            }
+        }
+        return RedirectToAction("Index");
+    }
+
+
+    [HttpPost("DeleteItem")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteItem(int userid, int itemid)
+    {
+        await _menuService.DeleteItemService(userid, itemid);
         TempData["CategoryAdd"] = "Item Deleted successfully";
         return RedirectToAction("Index");
     }
 
-    [HttpGet]
-    public async Task<IActionResult> EditItem(int id)
+    [HttpPost]
+    public async Task<IActionResult> DeleteModifier(int userid, int modifierid)
     {
-        var item = await _menuService.GetItemById(id); // New service method
+        await _menuService.DeleteModifierService(userid, modifierid);
+        TempData["ModifierGroupAdd"] = "Modifier Deleted successfully";
+        return RedirectToAction("Index");
+    }
+
+
+    [HttpGet]
+    public async Task<IActionResult> EditItemPartial(int id)
+    {
+        var item = await _menuService.GetItemById(id);
         if (item == null)
         {
             return NotFound();
@@ -189,39 +252,85 @@ public class MenuController : Controller
                 Shortcode = item.Shortcode,
                 Description = item.Description
             },
-            // Fetch categories for dropdown
+            Categories = await _menuService.GetAllCategories()
         };
-
-        return View("Index", viewModel); // Reuse Index view with pre-filled modal
+        await FetchData();
+        return PartialView("_EditItemPartial", viewModel);
     }
+
 
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> EditItem(MenuWithItemsViewModel viewModel)
     {
-        // Early check for null item
         if (viewModel.item == null)
         {
-            MenuWithItemsViewModel menu = await _menuService.GetAllCategory(0, "");
-            ModelState.AddModelError("", "Item details are required.");
-            return View("Index", menu);
+            return Json(new { success = false, message = "Item details are required." });
         }
 
         try
         {
             await FetchData();
-            int userId = ViewBag.Userid;
-            await _menuService.UpdateItemAsync(viewModel, viewModel.item.UploadFiles, userId);
-            TempData["SuccessMessage"] = "Item updated successfully!";
-            return RedirectToAction("Index");
+            await _menuService.UpdateItemAsync(viewModel, viewModel.item.UploadFiles, viewModel.Userid);
+
+            return Json(new { success = true, redirectUrl = Url.Action("Index") });
         }
         catch (Exception ex)
         {
-            System.Console.WriteLine("error :" + ex.Message);
-            MenuWithItemsViewModel menu1 = await _menuService.GetAllCategory(0, "");
-            menu1.item = viewModel.item;
-            return RedirectToAction("Index", menu1);
+            System.Console.WriteLine("Error: " + ex.Message);
+            return Json(new { success = false, message = "Error updating item." });
         }
     }
+
+
+
+    [HttpPost]
+    public async Task<IActionResult> IsAvailableUpdate(int itemId, bool available)
+    {
+        try
+        {
+            await FetchData();
+            int userId = ViewBag.Userid; // Consider dependency injection instead
+            Item? item = await _menuService.IsAvailabeUpdateAsync(itemId, available, userId);
+
+            if (item?.Isavailabe == available) // Added null check
+            {
+                return Json(new
+                {
+                    success = true,
+                    data = "Update completed successfully"
+                });
+            }
+
+            return Json(new
+            {
+                success = false,
+                data = "Update failed to apply"
+            });
+        }
+        catch (Exception e)
+        {
+            System.Console.WriteLine("Error in IsAvailableUpdate: " + e.Message);
+            return Json(new
+            {
+                success = false,
+                data = "An error occurred: " + e.Message
+            });
+        }
+    }
+    // [HttpPost]
+    // public async Task AddModifierGroupDetails(string selectedIds)
+    // {
+    //     if (!string.IsNullOrEmpty(selectedIds))
+    //     {
+    //         // Split the comma-separated string into an array of IDs
+    //         List<int> modifierIds = selectedIds.Split(',')
+    //                                  .Select(id => int.Parse(id))
+    //                                  .ToList();
+
+    //         // call service here
+    //         await _menuService.AddModifierGroupDetails(modifierIds);
+    //     }
+    // }
 
 }

@@ -25,5 +25,5 @@ public partial class Modifiergroup
 
     public int? Deletedbyid { get; set; }
 
-    public virtual ICollection<Modifier> Modifiers { get; set; } = new List<Modifier>();
+    public virtual ICollection<Modfierandgroupsmapping> Modfierandgroupsmappings { get; set; } = new List<Modfierandgroupsmapping>();
 }

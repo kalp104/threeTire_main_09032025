@@ -7,8 +7,6 @@ public partial class Modifier
 {
     public int Modifierid { get; set; }
 
-    public int Modifiergroupid { get; set; }
-
     public string? Modifiername { get; set; }
 
     public decimal? Modifierrate { get; set; }
@@ -37,5 +35,5 @@ public partial class Modifier
 
     public int? Deletedbyid { get; set; }
 
-    public virtual Modifiergroup Modifiergroup { get; set; } = null!;
+    public virtual ICollection<Modfierandgroupsmapping> Modfierandgroupsmappings { get; set; } = new List<Modfierandgroupsmapping>();
 }

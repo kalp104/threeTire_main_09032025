@@ -96,7 +96,7 @@ namespace PizzaShop.Repository.Implementations
                           orderby u.Userid descending
                           select new UserTableViewModel
                           {
-                             AccountId = a.Accountid,
+                              AccountId = a.Accountid,
                               Id = u.Userid,
                               Firstname = u.Firstname,
                               Lastname = u.Lastname,
@@ -139,7 +139,8 @@ namespace PizzaShop.Repository.Implementations
             var result = await (from pr in _context.PermissionsRoles
                                 join r in _context.Roles on pr.Roleid equals r.Roleid
                                 join p in _context.Permissions on pr.Permissionid equals p.Permissionid
-                                where r.Roleid == id orderby pr.Permissionroleid
+                                where r.Roleid == id
+                                orderby pr.Permissionroleid
                                 select new RolePermissionModelView
                                 {
                                     RoleId = id,
@@ -172,13 +173,44 @@ namespace PizzaShop.Repository.Implementations
         {
             return await _context.Items.Where(u => u.Isdeleted == false).OrderBy(u => u.Itemid).ToListAsync();
         }
+        public async Task<List<Modifier>> GetAllModifierAsync()
+        {
+            return await _context.Modifiers.Where(u => u.Isdeleted == false).OrderBy(u => u.Modifierid).ToListAsync();
+        }
 
         public async Task<List<Item>> GetItemsByCategoryAsync(int? id)
         {
-            return await _context.Items.Where(u => u.Isdeleted == false && u.Categoryid == id ).OrderBy(u => u.Itemid).ToListAsync();
+            return await _context.Items.Where(u => u.Isdeleted == false && u.Categoryid == id).OrderBy(u => u.Itemid).ToListAsync();
         }
+        public async Task<List<Modifier>> GetModifiersByMGAsync(int? id)
+        {
+            // return await _context.Modifiers.Where(u => u.Isdeleted == false && u.Modifiergroupid == id ).OrderBy(u => u.Modifierid).ToListAsync();
 
-        
+            var result = await (from mgm in _context.Modfierandgroupsmappings
+                                join m in _context.Modifiers on mgm.Modifierid equals m.Modifierid
+                                where mgm.Modifiergroupid == id 
+                                where m.Isdeleted == false 
+                                orderby m.Modifierid
+                                select new Modifier
+                                {
+                                    Modifierid = m.Modifierid,
+                                    Modifiername = m.Modifiername,
+                                    Modifierrate = m.Modifierrate,
+                                    Modifierquantity = m.Modifierquantity,
+                                    Modifierunit = m.Modifierunit,
+                                    Modifierdescription = m.Modifierdescription,
+                                    Taxpercentage = m.Taxpercentage,
+                                    Isdeleted = m.Isdeleted,
+                                    Createdat = m.Createdat,
+                                    Deletedat = m.Deletedat,
+                                    Editedat = m.Editedat,
+                                    Editedbyid = m.Editedbyid,
+                                    Createdbyid = m.Createdbyid,
+                                    Deletedbyid = m.Deletedbyid
+                                }).ToListAsync();
+            return result;
+
+        }
     }
 }
 

@@ -14,18 +14,24 @@ public class MenuService : IMenuService
     private readonly IGenericRepository<Category> _category;
     private readonly IGenericRepository<Item> _items;
     private readonly IGenericRepository<Modifiergroup> _modifierGroup;
+    private readonly IGenericRepository<Modifier> _modifier;
+    private readonly IGenericRepository<Modfierandgroupsmapping> _modfierandGroupsMapping;
     private readonly IWebHostEnvironment _webHostEnvironment;
 
     public MenuService(
         IGenericRepository<Category> category,
         IGenericRepository<Item> items,
         IGenericRepository<Modifiergroup> modifierGroup,
-        IWebHostEnvironment webHostEnvironment)
+        IGenericRepository<Modifier> modifier,
+        IWebHostEnvironment webHostEnvironment,
+        IGenericRepository<Modfierandgroupsmapping> modfierandGroupsMapping)
     {
         _category = category;
         _items = items;
         _webHostEnvironment = webHostEnvironment;
         _modifierGroup = modifierGroup;
+        _modifier = modifier;
+        _modfierandGroupsMapping = modfierandGroupsMapping;
     }
 
     public async Task<MenuWithItemsViewModel> GetAllCategory(int? categoryId = null, string? searchTerm = null, int pageNumber = 1, int pageSize = 5)
@@ -68,26 +74,47 @@ public class MenuService : IMenuService
 
 
 
-    public async Task<List<Modifiergroup>> GetAllModifier(int? modifierId = null, string? searchModifier = null)
+    public async Task<List<Category>> GetAllCategories()
     {
-        List<Modifiergroup>? mg = await _category.GetAllModifierGroupAsync();
-        // List<Item>? items = await _items.GetAllItemsAsync();
+        List<Category>? categories = await _category.GetAllCategoryAsync();
+        return categories;
+    }
+    
+
+    public async Task<MenuWithItemsViewModel> GetModifiers(int? modifierGroupId = null, string? searchModifier = null, int pageNumber = 1, int pageSize = 5)
+    {
+        List<Modifiergroup>? mg = await _modifierGroup.GetAllModifierGroupAsync();
+        List<Modifier>? modifiers;
 
         // Filter items by category if specified
-        // if (modifierId.HasValue)
-        // {
-        //     items = _items.GetItemsByCategoryAsync(categoryId.Value).Result;
-        // }
-
+        if (modifierGroupId.HasValue)
+        {
+            modifiers = await _modifier.GetModifiersByMGAsync(modifierGroupId.Value);
+        }
+        else
+        {
+            modifiers = await _modifier.GetAllModifierAsync();
+        }
         // Apply search filter if a search term is provided
-        // if (!string.IsNullOrEmpty(searchModifier))
-        // {
-        //     searchModifier = searchModifier.ToLower();
-        //     items = items.Where(i => i.Itemname.ToLower().Contains(searchModifier)).ToList();
-        // }
+        if (!string.IsNullOrEmpty(searchModifier))
+        {
+            searchModifier = searchModifier.ToLower();
+            modifiers = modifiers.Where(i => i.Modifiername.ToLower().Contains(searchModifier)).ToList();
+        }
+        int totalItems = modifiers.Count;
+        modifiers = modifiers.Skip((pageNumber - 1) * pageSize).Take(pageSize).ToList();
 
-        return mg;
+        return new MenuWithItemsViewModel
+        {
+            modifiergroups = mg,
+            Modifiers = modifiers,
+            CurrentPage1 = pageNumber,
+            PageSize1 = pageSize,
+            TotalItems1 = totalItems
+        };
     }
+
+
 
     public async Task AddCategoryService(MenuWithItemsViewModel model)
     {
@@ -117,6 +144,8 @@ public class MenuService : IMenuService
         await _modifierGroup.AddAsync(modifiergroup);
 
     }
+
+    
 
 
     public async Task EditCategoryService(MenuWithItemsViewModel model)
@@ -156,10 +185,11 @@ public class MenuService : IMenuService
         }
 
     }
+
     public async Task DeleteModifierGroupService(MenuWithItemsViewModel model)
     {
         Modifiergroup? mg = await _modifierGroup.GetByIdAsync(model.Modifiergroupid);
-        // List<Item> items = await _items.GetAllItemsAsync();
+        List<Modfierandgroupsmapping> modifiers = await _modfierandGroupsMapping.GetAllAsync();
         if (mg != null)
         {
             mg.Isdeleted = true;
@@ -167,77 +197,135 @@ public class MenuService : IMenuService
             mg.Deletedbyid = model.Userid;
             await _modifierGroup.UpdateAsync(mg);
         }
-        // foreach (var i in items)
-        // {
-        //     if (i.Categoryid == category.Categoryid)
-        //     {
-        //         i.Isdeleted = true;
-        //         i.Deletedat = DateTime.Now;
-        //         i.Deletedbyid = model.Userid;
-        //         await _items.UpdateAsync(i);
-        //     }
-        // }
+        foreach (var i in modifiers)
+        {
+            if (i.Modifiergroupid == mg.Modifiergroupid)
+            {
+                i.Isdelete = true;
+                i.Deletedat = DateTime.Now;
+                i.Deletedbyid = model.Userid;
+                await _modfierandGroupsMapping.UpdateAsync(i);
+            }
+        }
 
     }
-    public async Task DeleteItemService(MenuWithItemsViewModel model)
+
+    public async Task DeleteItemService(int userid, int itemid)
     {
-        Item? item = await _items.GetByIdAsync(model.itemid);
+        Item? item = await _items.GetByIdAsync(itemid);
         if (item != null)
         {
             item.Isdeleted = true;
             item.Deletedat = DateTime.Now;
-            item.Deletedbyid = model.Userid;
+            item.Deletedbyid = userid;
             await _items.UpdateAsync(item);
         }
     }
+    public async Task DeleteModifierService(int userid, int modifierid)
+    {
+        Modifier? item = await _modifier.GetByIdAsync(modifierid);
+        if (item != null)
+        {
+            item.Isdeleted = true;
+            item.Deletedat = DateTime.Now;
+            item.Deletedbyid = userid;
+            await _modifier.UpdateAsync(item);
+        }
+    }
 
-    public async Task AddItemAsync(MenuWithItemsViewModel viewModel, IFormFile? uploadFile, int userId)
+    public async Task AddModifierAsync(MenuWithItemsViewModel viewModel, int userId)
     {
         try
         {
-            var item = new Item
+            Modifier modifier = new Modifier
             {
-                Itemname = viewModel.item?.Itemname,
-                Categoryid = viewModel.item.Categoryid,
-                Itemtype = viewModel.item?.Itemtype,
-                Rate = viewModel.item?.Rate,
-                Quantity = viewModel.item?.Quantity,
-                Units = viewModel.item?.Units,
-                Isavailabe = viewModel.item?.Isavailabe,
-                DefaultTax = viewModel.item.Defaulttax,
-                Taxpercentage = viewModel.item?.Taxpercentage,
-                Shortcode = viewModel.item?.Shortcode,
-                Description = viewModel.item?.Description,
-                Status = 1
+                Modifiername = viewModel.modifiersViewModel.Modifiername,
+                Modifierrate = viewModel.modifiersViewModel.Modifierrate,
+                Modifierquantity = viewModel.modifiersViewModel.Modifierquantity,
+                Modifierunit = viewModel.modifiersViewModel.Modifierunit,
+                Modifierdescription = viewModel.modifiersViewModel.Modifierdescription,
+                Createdat = DateTime.Now,
+                Createdbyid = userId,
+                Isdeleted = false,
             };
-
-            if (uploadFile != null && uploadFile.Length > 0)
+            await _modifier.AddAsync(modifier);
+            Modfierandgroupsmapping modfierandgroupsmapping = new Modfierandgroupsmapping
             {
-                string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(uploadFile.FileName);
-                string uploadFolder = Path.Combine(_webHostEnvironment.WebRootPath, "items");
-                Directory.CreateDirectory(uploadFolder);
-                string filePath = Path.Combine(uploadFolder, uniqueFileName);
-
-                using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
-                {
-                    await uploadFile.CopyToAsync(fileStream);
-                }
-
-                item.Imageid = "/items/" + uniqueFileName;
-            }
-            await _items.AddAsync(item);
-
+                Modifierid = modifier.Modifierid,
+                Modifiergroupid = viewModel.modifiersViewModel.Modifiergroupid,
+                Createdat = DateTime.Now,
+                Createdbyid = userId,
+                Isdelete = false,
+            };
+            await _modfierandGroupsMapping.AddAsync(modfierandgroupsmapping);
         }
         catch (Exception ex)
         {
             throw new Exception("Error adding item: " + ex.Message, ex);
         }
+    }
+    public async Task AddItemAsync(MenuWithItemsViewModel viewModel, IFormFile? uploadFile, int userId)
+    {
+        {
+            try
+            {
+                Item item = new Item
+                {
+                    Itemname = viewModel.item?.Itemname,
+                    Categoryid = viewModel.item.Categoryid,
+                    Itemtype = viewModel.item?.Itemtype,
+                    Rate = viewModel.item?.Rate,
+                    Quantity = viewModel.item?.Quantity,
+                    Units = viewModel.item?.Units,
+                    Isavailabe = viewModel.item?.Isavailabe,
+                    DefaultTax = viewModel.item.Defaulttax,
+                    Taxpercentage = viewModel.item?.Taxpercentage,
+                    Shortcode = viewModel.item?.Shortcode,
+                    Description = viewModel.item?.Description,
+                    Createdat = DateTime.Now,
+                    Createdbyid = userId,
+                    Status = 1
+                };
 
+                if (uploadFile != null && uploadFile.Length > 0)
+                {
+                    string uniqueFileName = Guid.NewGuid().ToString() + Path.GetExtension(uploadFile.FileName);
+                    string uploadFolder = Path.Combine(_webHostEnvironment.WebRootPath, "items");
+                    Directory.CreateDirectory(uploadFolder);
+                    string filePath = Path.Combine(uploadFolder, uniqueFileName);
+
+                    using (var fileStream = new FileStream(filePath, FileMode.Create, FileAccess.Write))
+                    {
+                        await uploadFile.CopyToAsync(fileStream);
+                    }
+
+                    item.Imageid = "/items/" + uniqueFileName;
+                }
+                await _items.AddAsync(item);
+
+            }
+            catch (Exception ex)
+            {
+                throw new Exception("Error adding item: " + ex.Message, ex);
+            }
+
+        }
     }
 
     public async Task<Item> GetItemById(int id)
     {
         return await _items.GetByIdAsync(id);
+    }
+    public async Task<Item> IsAvailabeUpdateAsync(int id, bool available, int userid)
+    {
+        Item? item = await _items.GetByIdAsync(id);
+        if (item != null)
+        {
+            item.Isavailabe = available;
+            item.Editedat = DateTime.Now;
+            item.Editedbyid = userid;
+        }
+        return item;
     }
 
     public async Task UpdateItemAsync(MenuWithItemsViewModel viewModel, IFormFile? uploadFile, int userId)
@@ -249,7 +337,7 @@ public class MenuService : IMenuService
                 throw new ArgumentNullException(nameof(viewModel.item), "Item details are required.");
             }
 
-            var item = await _items.GetByIdAsync(viewModel.itemid);
+            Item? item = await _items.GetByIdAsync(viewModel.item.Itemid);
             if (item == null)
             {
                 throw new Exception("Item not found.");
